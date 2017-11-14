@@ -245,7 +245,7 @@ export class MonthViewComponent implements ICalendarComponent, OnInit, OnChanges
     @Input()
     set locale(locale: string) {
       this._locale = locale;
-      this.init();
+      this.initAndRefresh();
     }
     @Input() dateFormatter:IDateFormatter;
     @Input() dir:string = "";
