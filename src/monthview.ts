@@ -241,7 +241,12 @@ export class MonthViewComponent implements ICalendarComponent, OnInit, OnChanges
     @Input() noEventsLabel:string;
     @Input() autoSelect:boolean = true;
     @Input() markDisabled:(date:Date) => boolean;
-    @Input() locale:string;
+    @Input() _locale:string;
+    @Input()
+    set locale(locale: string) {
+      this._locale = locale;
+      this.init();
+    }
     @Input() dateFormatter:IDateFormatter;
     @Input() dir:string = "";
     @Input() lockSwipeToPrev:boolean;
@@ -272,51 +277,55 @@ export class MonthViewComponent implements ICalendarComponent, OnInit, OnChanges
     }
 
     ngOnInit() {
-        if (this.dateFormatter && this.dateFormatter.formatMonthViewDay) {
-            this.formatDayLabel = this.dateFormatter.formatMonthViewDay;
-        } else {
-            let dayLabelDatePipe = new DatePipe('en-US');
-            this.formatDayLabel = function (date:Date) {
-                return dayLabelDatePipe.transform(date, this.formatDay);
-            };
-        }
+        this.initAndRefresh();
+    }
 
-        if (this.dateFormatter && this.dateFormatter.formatMonthViewDayHeader) {
-            this.formatDayHeaderLabel = this.dateFormatter.formatMonthViewDayHeader;
-        } else {
-            let datePipe = new DatePipe(this.locale);
-            this.formatDayHeaderLabel = function (date:Date) {
-                return datePipe.transform(date, this.formatDayHeader);
-            };
-        }
+    initAndRefresh(){
+      if (this.dateFormatter && this.dateFormatter.formatMonthViewDay) {
+        this.formatDayLabel = this.dateFormatter.formatMonthViewDay;
+    } else {
+        let dayLabelDatePipe = new DatePipe('en-US');
+        this.formatDayLabel = function (date:Date) {
+            return dayLabelDatePipe.transform(date, this.formatDay);
+        };
+    }
 
-        if (this.dateFormatter && this.dateFormatter.formatMonthViewTitle) {
-            this.formatTitle = this.dateFormatter.formatMonthViewTitle;
-        } else {
-            let datePipe = new DatePipe(this.locale);
-            this.formatTitle = function (date:Date) {
-                return datePipe.transform(date, this.formatMonthTitle);
-            };
-        }
+    if (this.dateFormatter && this.dateFormatter.formatMonthViewDayHeader) {
+        this.formatDayHeaderLabel = this.dateFormatter.formatMonthViewDayHeader;
+    } else {
+        let datePipe = new DatePipe(this._locale);
+        this.formatDayHeaderLabel = function (date:Date) {
+            return datePipe.transform(date, this.formatDayHeader);
+        };
+    }
 
-        if (this.lockSwipeToPrev) {
-            this.slider.lockSwipeToPrev(true);
-        }
+    if (this.dateFormatter && this.dateFormatter.formatMonthViewTitle) {
+        this.formatTitle = this.dateFormatter.formatMonthViewTitle;
+    } else {
+        let datePipe = new DatePipe(this._locale);
+        this.formatTitle = function (date:Date) {
+            return datePipe.transform(date, this.formatMonthTitle);
+        };
+    }
 
-        if (this.lockSwipes) {
-            this.slider.lockSwipes(true);
-        }
+    if (this.lockSwipeToPrev) {
+        this.slider.lockSwipeToPrev(true);
+    }
 
+    if (this.lockSwipes) {
+        this.slider.lockSwipes(true);
+    }
+
+    this.refreshView();
+    this.inited = true;
+
+    this.currentDateChangedFromParentSubscription = this.calendarService.currentDateChangedFromParent$.subscribe(currentDate => {
         this.refreshView();
-        this.inited = true;
+    });
 
-        this.currentDateChangedFromParentSubscription = this.calendarService.currentDateChangedFromParent$.subscribe(currentDate => {
-            this.refreshView();
-        });
-
-        this.eventSourceChangedSubscription = this.calendarService.eventSourceChanged$.subscribe(() => {
-            this.onDataLoaded();
-        });
+    this.eventSourceChangedSubscription = this.calendarService.eventSourceChanged$.subscribe(() => {
+        this.onDataLoaded();
+    });
     }
 
     ngOnDestroy() {
@@ -735,3 +744,4 @@ export class MonthViewComponent implements ICalendarComponent, OnInit, OnChanges
         this.onEventSelected.emit(event);
     }
 }
+
